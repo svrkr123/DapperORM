@@ -1,0 +1,196 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Employees</h2>
+<div style="float: right; margin-bottom: 8px">
+    <input type="button" value="Add" class="btn btn-primary btn-sm" id="btnAdd" />
+</div>
+<div>
+    <table id="tblEmployees" class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Address</th>
+                <th>City</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="employeeModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Add Employee</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label for="recipient-name" class="col-form-label">First Name:</label>
+                    <input type="text" class="form-control" id="txtFirstName" />
+                    <input type="hidden" id="txtId" />
+                </div>
+                <div class="form-group">
+                    <label for="message-text" class="col-form-label">Last Name:</label>
+                    <input type="text" class="form-control" id="txtLastName" />
+                </div>
+                <div class="form-group">
+                    <label for="message-text" class="col-form-label">Address:</label>
+                    <input type="text" class="form-control" id="txtAddress" />
+                </div>
+                <div class="form-group">
+                    <label for="message-text" class="col-form-label">City:</label>
+                    <input type="text" class="form-control" id="txtCity" />
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger btn-sm" data-dismiss="modal">Close</button>
+                <button type="button" id="btnSave" class="btn btn-primary btn-sm">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+
+    <script>
+    $(document).ready(function () {
+        getEmployees();
+    });
+
+    function getEmployees() {
+        var _url = '@Url.Action("GetEmployees", "Dapper")';
+        $.ajax({
+            url: _url,
+            type: "GET",
+            success: function (data) {
+                if (data.length > 0) {
+                    $("#tblEmployees tbody").empty();
+                    var tr = "";
+                    $.each(data, function (key, value) {
+                        tr += "<tr><td>" + value.FirstName + "</td><td>" + value.LastName + "</td><td>" + value.Address + "</td><td>" + value.City + "</td><td><a class='btn btn-primary btn-sm' onclick='getEmployee(" + value.id + ")'>Edit</a><a class='btn btn-danger btn-sm' onclick='deleteEmployee(" + value.id + ")'>Delete</a></td></tr>";
+                    });
+                    $("#tblEmployees tbody").append(tr);
+                }
+            }
+        });
+    }
+
+    $("#btnAdd").click(function () {
+        $("#employeeModal").modal("show");
+    });
+
+    $("#btnSave").click(function () {
+        var employee = {
+            "id": $("#txtId").val(),
+            "FirstName": $("#txtFirstName").val(),
+            "LastName": $("#txtLastName").val(),
+            "Address": $("#txtAddress").val(),
+            "City": $("#txtCity").val()
+        };
+        if ($("#txtId").val() == "") {
+            saveData(employee);
+        } else {
+            updateData(employee);
+        }
+    });
+
+    function saveData(employee) {
+        var _url = '@Url.Action("SaveEmployee", "Dapper")';
+        $.ajax({
+            url: _url,
+            type: "POST",
+            data: { "employee": employee },
+            success: function (data) {
+                if (data != 0) {
+                    alert("Record Added Succesfully");
+                    reset();
+                    getEmployees();
+                    $("#employeeModal").modal("hide");
+                }
+                else {
+                    alert("Something went wrong");
+                }
+            }
+        });
+    }
+
+    function updateData(employee) {
+        var _url = '@Url.Action("UpdateEmployee", "Dapper")';
+        $.ajax({
+            url: _url,
+            type: "POST",
+            data: { "employee": employee },
+            success: function (data) {
+                if (data != 0) {
+                    alert("Record Updated Succesfully");
+                    reset();
+                    getEmployees();
+                    $("#employeeModal").modal("hide");
+                }
+                else {
+                    alert("Something went wrong");
+                }
+            }
+        });
+    }
+
+    function getEmployee(id) {
+        var _url = '@Url.Action("GetEmployee", "Dapper")';
+        $.ajax({
+            url: _url,
+            type: "GET",
+            data: { "id": id },
+            success: function (data) {
+                if (data != null) {
+                    $("#txtId").val(data.id);
+                    $("#txtFirstName").val(data.FirstName);
+                    $("#txtLastName").val(data.LastName);
+                    $("#txtAddress").val(data.Address);
+                    $("#txtCity").val(data.City);
+                    $("#employeeModal").modal("show");
+                }
+            }
+        })
+    }
+
+    function deleteEmployee(id) {
+        if (confirm("Are you sure want to delete this record?")) {
+            var _url = '@Url.Action("DeleteEmployee", "Dapper")';
+            $.ajax({
+                url: _url,
+                type: "POST",
+                data: { "id": id },
+                success: function (data) {
+                    if (data != 0) {
+                        alert("Record Deleted Successfully");
+                        getEmployees();
+                    }
+                }
+            })
+        }
+    }
+
+    function reset() {
+        $("#txtId").val("");
+        $("#txtFirstName").val("");
+        $("#txtLastName").val("");
+        $("#txtAddress").val("");
+        $("#txtCity").val("");
+    }
+
+    </script>
+    
+}
+
